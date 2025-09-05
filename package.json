@@ -16,5 +16,10 @@
     "hardhat": "^3.0.0",
     "mocha": "^11.7.1",
     "typescript": "~5.8.0"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.8.2",
+    "circomlibjs": "^0.1.7",
+    "react-redux": "^9.2.0"
   }
 }

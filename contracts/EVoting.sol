@@ -10,7 +10,7 @@ contract EVoting {
     	mapping(uint256 => uint256) candidateVotes;
     	mapping(address => bool) hasVoted;
     	mapping(address => bytes32) voteProof;
-    	bool exists;
+    	bool active;
   	}
 
   	mapping(uint256 => Election) public elections;
@@ -24,7 +24,7 @@ contract EVoting {
 
         Election storage e = elections[nextElectionId];
         e.id = nextElectionId;
-        e.exists = true;
+        e.active = true;
 
         for (uint256 i = 0; i < candidateIds.length; i++) {
             e.candidateIds.push(candidateIds[i]);
@@ -38,7 +38,7 @@ contract EVoting {
 
 	function vote(uint256 electionId, uint256 candidateId, bytes32 proofHash) external {
         Election storage e = elections[electionId];
-        require(e.exists, "Election does not exist");
+        require(e.active, "Election is not active");
         require(!e.hasVoted[msg.sender], "Already voted");
 
         // check candidate is valid

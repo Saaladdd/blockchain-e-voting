@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar, Users, Vote, Clock } from "lucide-react"
 import { mockElections, getActiveElections, type Election } from "@/lib/elections"
+import  WalletConnectButton from "@/components/voter/WallectConnectButton";
 
 interface ElectionSelectorProps {
   selectedElection: Election | null

@@ -1,6 +1,6 @@
 # Blockchain-based E-Voting System 🗳️
 
-A **hybrid blockchain-based electronic voting system** built with **Solidity, Hardhat, and React**.  
+A **hybrid blockchain-based electronic voting system** built with **Solidity, Hardhat, and Next.js**.  
 This project ensures **transparency, immutability, and verifiability** of elections while optimizing storage costs by keeping only **critical proofs and counts on-chain**, and handling voter/candidate details **off-chain**.
 
 ---

@@ -39,8 +39,9 @@ export default function VoterDashboard() {
     nationalId: "",
     fullName: "",
     dateOfBirth: "",
-    address: "",
+    otp: "",
     phoneNumber: "",
+
   })
 
   useEffect(() => {
@@ -206,30 +207,58 @@ export default function VoterDashboard() {
 
                       <div className="space-y-2">
                         <Label htmlFor="phoneNumber">Phone Number</Label>
-                        <Input
-                          id="phoneNumber"
-                          type="tel"
-                          placeholder="Enter your phone number"
-                          value={verificationData.phoneNumber}
-                          onChange={(e) => setVerificationData({ ...verificationData, phoneNumber: e.target.value })}
-                          required
-                          className="transition-all duration-200 focus:ring-2"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            id="phoneNumber"
+                            type="tel"
+                            placeholder="Enter your phone number"
+                            value={verificationData.phoneNumber}
+                            onChange={(e) =>
+                              setVerificationData({
+                                ...verificationData,
+                                phoneNumber: e.target.value,
+                              })
+                            }
+                            required
+                            className="transition-all duration-200 focus:ring-2"
+                          />
+                          <Button
+                            type="button"
+                            className="shrink-0"
+                            onClick={() => {
+                              // 👇 your OTP sending logic goes here
+                              console.log("Send OTP to", verificationData.phoneNumber);
+                               setVerificationData({
+                                ...verificationData,
+                                phoneNumber: "",
+                              });
+                            }}
+                          >
+                            Send OTP
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <div className="flex gap-1">
+                          <Input
+                            id="otp"
+                            type="num"
+                            placeholder="Enter your OTP"
+                            value={verificationData.otp}
+                            onChange={(e) =>
+                              setVerificationData({
+                                ...verificationData,
+                                phoneNumber: e.target.value,
+                              })
+                            }
+                            required
+                            className="transition-all duration-200 focus:ring-2"
+                          />
+                        </div>
                       </div>
                     </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Residential Address</Label>
-                      <Input
-                        id="address"
-                        type="text"
-                        placeholder="Enter your full address"
-                        value={verificationData.address}
-                        onChange={(e) => setVerificationData({ ...verificationData, address: e.target.value })}
-                        required
-                        className="transition-all duration-200 focus:ring-2"
-                      />
-                    </div>
+                    
 
                     <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" size="lg">
                       Submit for Verification

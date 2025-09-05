@@ -12,6 +12,7 @@ import { useAuth } from "@/components/auth/auth-provider"
 import { authenticateUser } from "@/lib/auth"
 import { Navbar } from "@/components/navigation/navbar"
 import { FadeIn } from "@/components/ui/fade-in"
+import WalletConnectButton from "@/components/voter/WallectConnectButton"
 
 export default function VoterLoginPage() {
   const [formData, setFormData] = useState({
@@ -91,7 +92,7 @@ export default function VoterLoginPage() {
                     )}
                   </Button>
                 </form>
-
+                <WalletConnectButton />
                 <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:bg-muted/50">
                   <h4 className="mb-2 text-sm font-medium">Next Steps</h4>
                   <p className="text-xs text-muted-foreground">

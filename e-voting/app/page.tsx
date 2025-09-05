@@ -1,11 +1,35 @@
+"use client"
+
 import Link from "next/link"
+import { useEffect } from "react"
+import { loadProvider, loadNetwork } from "@/lib/web3"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Vote, Users, Shield } from "lucide-react"
+import { RootState, AppDispatch } from "./store";
 import { ThemeToggle } from "@/components/theme-toggle"
 import { FadeIn } from "@/components/ui/fade-in"
+import { useDispatch, useSelector } from "react-redux";
+import { connectWallet } from "@/lib/web3";
 
 export default function HomePage() {
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { provider, chainId, account } = useSelector((state: RootState) => state.web3);
+
+  useEffect(() => {
+    const init = async () => {
+      const prov = loadProvider(dispatch);
+      await loadNetwork(prov, dispatch);
+    };
+    init();
+  }, [dispatch]);
+
+  const handleConnect = async () => {
+    await connectWallet(dispatch);
+  };
+
+
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       {/* Header */}

@@ -2,7 +2,7 @@ export interface VerificationData {
   nationalId: string
   fullName: string
   dateOfBirth: string
-  address: string
+  otp: string
   phoneNumber: string
 }
 
