@@ -14,31 +14,44 @@ import { Navbar } from "@/components/navigation/navbar"
 import { FadeIn } from "@/components/ui/fade-in"
 import WalletConnectButton from "@/components/voter/WallectConnectButton"
 
+
 export default function VoterLoginPage() {
   const [formData, setFormData] = useState({
-    nationalId: "",
-    fullName: "",
+    voterId: "",
   })
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const { login } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError(null)
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      const user = await authenticateUser("voter", formData)
-      if (user) {
-        login(user)
-        router.push("/voter/dashboard")
+      const res = await fetch("/api/voter-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voterId: formData.voterId }),
+      })
+      const data = await res.json()
+      console.log("Show:",data)
+      if (!data.exists) {
+        setError("Invalid Voter ID");
+        return
       }
-    } catch (error) {
-      console.error("Login failed:", error)
+      else{
+        login({ voterId: formData.voterId }); 
+        router.push("/voter/dashboard");
+      }
+
+    } catch (err) {
+      console.error("Login failed:", err)
+      setError("Something went wrong. Please try again.")
     } finally {
       setIsLoading(false)
+      
     }
   }
 
@@ -46,7 +59,6 @@ export default function VoterLoginPage() {
     <div className="min-h-screen bg-background transition-colors duration-300">
       <Navbar />
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-12">
         <div className="mx-auto max-w-md">
           <FadeIn delay={200}>
@@ -63,17 +75,18 @@ export default function VoterLoginPage() {
               <CardContent>
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="nationalId">Voter ID Number</Label>
+                    <Label htmlFor="voterId">Voter ID Number</Label>
                     <Input
-                      id="nationalId"
+                      id="voterId"
                       type="text"
                       placeholder="Enter your Voter ID"
-                      value={formData.nationalId}
-                      onChange={(e) => setFormData({ ...formData, nationalId: e.target.value })}
+                      value={formData.voterId}
+                      onChange={(e) => setFormData({ ...formData, voterId: e.target.value })}
                       required
                       disabled={isLoading}
                       className="transition-all duration-300 focus:ring-2 focus:scale-[1.02]"
                     />
+                    {error && <p className="text-sm text-red-500">{error}</p>}
                   </div>
 
                   <Button
@@ -92,12 +105,10 @@ export default function VoterLoginPage() {
                     )}
                   </Button>
                 </form>
-                <WalletConnectButton />
                 <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:bg-muted/50">
                   <h4 className="mb-2 text-sm font-medium">Next Steps</h4>
                   <p className="text-xs text-muted-foreground">
-                    After login, you'll complete identity verification, then connect your wallet to participate in
-                    voting.
+                    After login, you'll complete identity verification, then connect your wallet to participate in voting.
                   </p>
                 </div>
               </CardContent>

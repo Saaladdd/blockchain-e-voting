@@ -230,7 +230,7 @@ export default function VoterDashboard() {
                               console.log("Send OTP to", verificationData.phoneNumber);
                                setVerificationData({
                                 ...verificationData,
-                                phoneNumber: "",
+                                otp: "",
                               });
                             }}
                           >
@@ -239,7 +239,7 @@ export default function VoterDashboard() {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <Label htmlFor="otp">OTP</Label>
                         <div className="flex gap-1">
                           <Input
                             id="otp"
@@ -249,7 +249,7 @@ export default function VoterDashboard() {
                             onChange={(e) =>
                               setVerificationData({
                                 ...verificationData,
-                                phoneNumber: e.target.value,
+                                otp: e.target.value,
                               })
                             }
                             required
