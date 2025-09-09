@@ -41,8 +41,7 @@ export default function VoterLoginPage() {
         setError("Invalid Voter ID");
         return
       }
-      else{
-        login({ voterId: formData.voterId }); 
+      else{ 
         router.push("/voter/dashboard");
       }
 

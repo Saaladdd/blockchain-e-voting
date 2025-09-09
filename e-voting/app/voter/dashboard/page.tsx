@@ -1,8 +1,8 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
+import { UserRole } from "@/lib/auth"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,68 +18,74 @@ import { VoteConfirmationModal } from "@/components/voting/vote-confirmation-mod
 import { ElectionSelector } from "@/components/voter/election-selector"
 import { Navbar } from "@/components/navigation/navbar"
 import {
-  submitVerification,
   getVerificationStatus,
   type VerificationData,
   type VerificationStatus,
 } from "@/lib/voter-verification"
+import WalletConnectButton from "@/components/voter/WallectConnectButton"
+import { useSelector } from "react-redux";
+import { RootState } from "@/app/store";
 
 export default function VoterDashboard() {
-  const { user, logout } = useAuth()
+  const {user,logout,login } = useAuth()
+  const {account, connected} = useSelector((state:RootState)=> state.wallet)
   const router = useRouter()
   const [selectedParty, setSelectedParty] = useState<Party | null>(null)
   const [selectedElection, setSelectedElection] = useState<Election | null>(null)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [voterStatus, setVoterStatus] = useState({ hasVoted: false, vote: undefined })
   const [verificationStatus, setVerificationStatus] = useState<VerificationStatus | null>(null)
-  const [walletConnected, setWalletConnected] = useState(false)
+  
   const [isConnecting, setIsConnecting] = useState(false)
+  
 
   const [verificationData, setVerificationData] = useState<VerificationData>({
-    nationalId: "",
     fullName: "",
     dateOfBirth: "",
     otp: "",
-    phoneNumber: "",
-
+    phoneNumber: ""
   })
-
+  const [error, setError] = useState<string | null>(null)
+  console.log("User:",user);
   useEffect(() => {
-    if (!user || user.role !== "voter") {
-      router.push("/voter/login")
-      return
+   
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      const res = await fetch("/api/voter-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: verificationData.fullName.trim(), 
+                                dateOfBirth: verificationData.dateOfBirth, 
+                                otp: verificationData.otp.trim(), 
+                                phoneNumber: verificationData.phoneNumber.trim() }), 
+      })
+
+      const data = await res.json()
+      console.log("Show:",data)
+      if (!data.exists) {
+        setError("Credentials do not match");
+        return
+      }
+      else{
+        setError(null);
+        login({
+          fullName: verificationData.fullName,
+          dateOfBirth: verificationData.dateOfBirth,
+          role: "voter" as UserRole,
+        })
+        setVerificationStatus("verified" as VerificationStatus);
+              
+      }
+      
+    } catch (error) {
+      console.error("Error submitting verification:", error)
     }
-
-    // Set default election to first active election
-    const activeElections = getActiveElections()
-    if (activeElections.length > 0 && !selectedElection) {
-      setSelectedElection(activeElections[0])
-    }
-
-    const verification = getVerificationStatus(user.id)
-    setVerificationStatus(verification)
-
-    const interval = setInterval(() => {
-      const updatedVerification = getVerificationStatus(user.id)
-      setVerificationStatus(updatedVerification)
-    }, 1000)
-
-    return () => clearInterval(interval)
-  }, [user, router, selectedElection])
-
-  useEffect(() => {
-    if (user && selectedElection) {
-      getVoterStatusForElection(selectedElection.id, user.id).then(setVoterStatus)
-    }
-  }, [user, selectedElection])
-
-  const handleVerificationSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!user) return
-
-    const verification = submitVerification(user.id, verificationData)
-    setVerificationStatus(verification)
   }
+    
 
   const handleWalletConnect = async () => {
     setIsConnecting(true)
@@ -99,7 +105,7 @@ export default function VoterDashboard() {
     if (!user || !selectedParty || !selectedElection) return
 
     try {
-      await submitVoteForElection(selectedElection.id, user.id, selectedParty.id)
+      //await submitVoteForElection(selectedElection.id, selectedParty.id)
       setShowConfirmation(false)
       router.push("/voter/confirmation")
     } catch (error) {
@@ -109,7 +115,7 @@ export default function VoterDashboard() {
 
   if (!user) return null
 
-  if (!verificationStatus || verificationStatus.status !== "approved") {
+  if (!verificationStatus || verificationStatus !== "verified") {
     return (
       <div className="min-h-screen bg-background transition-colors duration-200">
         <Navbar role="voter" title="Voter Dashboard" />
@@ -165,21 +171,9 @@ export default function VoterDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleVerificationSubmit} className="space-y-4">
+                  <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="nationalId">National ID Number</Label>
-                        <Input
-                          id="nationalId"
-                          type="text"
-                          placeholder="Enter your national ID"
-                          value={verificationData.nationalId}
-                          onChange={(e) => setVerificationData({ ...verificationData, nationalId: e.target.value })}
-                          required
-                          className="transition-all duration-200 focus:ring-2"
-                        />
-                      </div>
-
+    
                       <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
                         <Input
@@ -259,7 +253,7 @@ export default function VoterDashboard() {
                       </div>
                     </div>
                     
-
+                    {error && <p className="text-red-500 text-sm">{error}</p>}
                     <Button type="submit" className="w-full transition-all duration-200 hover:scale-105" size="lg">
                       Submit for Verification
                     </Button>
@@ -303,7 +297,7 @@ export default function VoterDashboard() {
         {selectedElection && (
           <>
             {/* Verification Success & Wallet Connection */}
-            {!walletConnected && (
+            {!connected && (
               <Card className="mb-8 transition-all duration-200">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -315,21 +309,13 @@ export default function VoterDashboard() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button
-                    onClick={handleWalletConnect}
-                    disabled={isConnecting}
-                    className="w-full transition-all duration-200 hover:scale-105"
-                    size="lg"
-                  >
-                    <Wallet className="mr-2 h-4 w-4" />
-                    {isConnecting ? "Connecting..." : "Connect Wallet"}
-                  </Button>
+                  <WalletConnectButton />
                 </CardContent>
               </Card>
             )}
 
             {/* Wallet Connected Status */}
-            {walletConnected && (
+            {connected && (
               <Card className="mb-8 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950 transition-all duration-200">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-3">
@@ -402,7 +388,7 @@ export default function VoterDashboard() {
             )}
 
             {/* Parties List */}
-            {walletConnected && selectedElection.status === "active" && (
+            {connected && selectedElection.status === "active" && (
               <div className="mb-8">
                 <h2 className="mb-6 text-2xl font-serif font-bold">Available Parties</h2>
                 <div className="grid gap-6 md:grid-cols-2">
@@ -430,14 +416,14 @@ export default function VoterDashboard() {
                         <p className="mb-4 text-sm text-muted-foreground">{party.manifesto}</p>
                         <Button
                           onClick={() => handleVoteClick(party)}
-                          disabled={selectedElection.status !== "active" || voterStatus.hasVoted || !walletConnected}
+                          disabled={selectedElection.status !== "active" || voterStatus.hasVoted || !connected}
                           className="w-full transition-all duration-200 hover:scale-105"
                           style={{ backgroundColor: voterStatus.hasVoted ? undefined : party.color }}
                         >
                           <Vote className="mr-2 h-4 w-4" />
                           {voterStatus.hasVoted
                             ? "Vote Cast"
-                            : !walletConnected
+                            : !connected
                               ? "Connect Wallet First"
                               : "Vote for this Party"}
                         </Button>
@@ -461,7 +447,7 @@ export default function VoterDashboard() {
                   <div>
                     <h4 className="font-semibold">Your Status</h4>
                     <p className="text-sm text-muted-foreground">
-                      {!walletConnected
+                      {!connected
                         ? "Identity verified - Connect wallet to vote"
                         : voterStatus.hasVoted
                           ? `You have successfully cast your vote in ${selectedElection.name}.`

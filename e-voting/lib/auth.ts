@@ -1,13 +1,10 @@
 export type UserRole = "voter" | "party" | "admin"
 
 export interface User {
-  id: string
   role: UserRole
-  name: string
-  email?: string
+  fullName: string
   walletAddress?: string
-  partyId?: string
-  isVerified?: boolean
+  dateOfBirth?: string
 }
 
 export interface AuthState {
@@ -43,9 +40,19 @@ export const mockUsers = {
 }
 
 export const authenticateUser = async (role: UserRole, credentials: any): Promise<User | null> => {
-  // Mock authentication - replace with real authentication logic
-  await new Promise((resolve) => setTimeout(resolve, 1000))
-  return mockUsers[role]
+  // Simulate API call
+  await new Promise((resolve) => setTimeout(resolve, 500))
+
+  if (role === "voter") {
+    if (!credentials?.voterId) return null
+
+    return {
+      role: "voter",
+      name: `Voter-${credentials.voterId}`, // you could fetch real name from DB
+    }
+  }
+
+  return mockUsers[role] || null
 }
 
 export const getCurrentUser = (): User | null => {

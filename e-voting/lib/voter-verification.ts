@@ -1,46 +1,33 @@
+import { User } from "./auth"
+
 export interface VerificationData {
-  nationalId: string
   fullName: string
   dateOfBirth: string
   otp: string
   phoneNumber: string
 }
 
-export interface VerificationStatus {
-  id: string
-  status: "pending" | "approved" | "rejected"
-  submittedAt: Date
-  reviewedAt?: Date
-  rejectionReason?: string
-}
-
 // Mock verification data storage
-const verificationStatuses = new Map<string, VerificationStatus>()
+export type VerificationStatus = "pending" | "verified" | "rejected"
 
-export function submitVerification(userId: string, data: VerificationData): VerificationStatus {
-  const verification: VerificationStatus = {
-    id: `verification_${Date.now()}`,
-    status: "pending",
-    submittedAt: new Date(),
-  }
-
-  verificationStatuses.set(userId, verification)
-
-  // Mock auto-approval after 3 seconds for demo
-  setTimeout(() => {
-    const current = verificationStatuses.get(userId)
-    if (current && current.status === "pending") {
-      verificationStatuses.set(userId, {
-        ...current,
-        status: "approved",
-        reviewedAt: new Date(),
-      })
-    }
-  }, 3000)
-
-  return verification
+export const getVerificationStatuses = (): Record<string, VerificationStatus> => {
+  if (typeof window === "undefined") return {}
+  const stored = localStorage.getItem("verificationStatuses")
+  return stored ? JSON.parse(stored) : {}
 }
 
-export function getVerificationStatus(userId: string): VerificationStatus | null {
-  return verificationStatuses.get(userId) || null
+export const setVerificationStatus = (user: User, status: VerificationStatus) => {
+  if (!user.walletAddress || typeof window === "undefined") return
+
+  const statuses = getVerificationStatuses()
+  statuses[user.walletAddress] = status
+  localStorage.setItem("verificationStatuses", JSON.stringify(statuses))
 }
+
+export const getVerificationStatus = (user: User): VerificationStatus | null => {
+  if (!user.walletAddress || typeof window === "undefined") return null
+
+  const statuses = getVerificationStatuses()
+  return statuses[user.walletAddress] || null
+}
+

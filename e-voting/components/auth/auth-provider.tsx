@@ -1,22 +1,14 @@
 "use client"
 
-import type React from "react"
-
-import { createContext, useContext, useEffect, useState } from "react"
+import React, { createContext, useContext, useEffect, useState } from "react"
 import { type User, type AuthState, getCurrentUser } from "@/lib/auth"
 
-const AuthContext = createContext<
-  AuthState & {
-    login: (user: User) => void
-    logout: () => void
-  }
->({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  login: () => {},
-  logout: () => {},
-})
+type AuthContextType = AuthState & {
+  login: (user: User) => void
+  logout: () => void
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
