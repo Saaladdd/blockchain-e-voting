@@ -1,63 +1,97 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.28;
+pragma solidity ^0.8.20;
+
+import "./Verifier.sol";
+
 
 contract EVoting {
-  
-  	struct Election{
-    	uint256 id;
-    	uint256 voteCount;
-    	uint256[] candidateIds;
-    	mapping(uint256 => uint256) candidateVotes;
-    	mapping(address => bool) hasVoted;
-    	mapping(address => bytes32) voteProof;
-    	bool active;
-  	}
+    Groth16Verifier public verifier;
 
-  	mapping(uint256 => Election) public elections;
-  	uint256 public nextElectionId;
-
-	event ElectionCreated(uint256 indexed electionId, string name, uint256[] candidateIds);
-	event Voted(uint256 indexed electionId, uint256 indexed candidateId, address voter);
-
-	function createElection(string memory name, uint256[] memory candidateIds) external {
-        require(candidateIds.length > 0, "Need at least 1 candidate");
-
-        Election storage e = elections[nextElectionId];
-        e.id = nextElectionId;
-        e.active = true;
-
-        for (uint256 i = 0; i < candidateIds.length; i++) {
-            e.candidateIds.push(candidateIds[i]);
-            e.candidateVotes[candidateIds[i]] = 0; // initialize votes
-        }
-
-        emit ElectionCreated(nextElectionId, name, candidateIds);
-        nextElectionId++;
+    constructor() {
+        verifier = new Groth16Verifier();
     }
 
+    // -------------------------
+    // STRUCTS
+    // -------------------------
+    struct Election {
+        string name;
+        bool active;
+        uint256 totalVotes;
+        mapping(uint256 => uint256) partyVotes; // partyId => vote count
+        mapping(address => bool) hasVoted; // prevent double voting
+    }
 
-	function vote(uint256 electionId, uint256 candidateId, bytes32 proofHash) external {
-        Election storage e = elections[electionId];
+    mapping(uint256 => Election) private elections; // electionId => Election
+    uint256 public electionCount = 0;
+
+    // -------------------------
+    // EVENTS
+    // -------------------------
+    event ElectionCreated(uint256 indexed electionId, string name);
+    event VoteCast(uint256 indexed electionId, uint256 indexed partyId);
+
+    // -------------------------
+    // ELECTION MANAGEMENT
+    // -------------------------
+    function createElection(string memory _name) external returns (uint256) {
+        electionCount++;
+        Election storage e = elections[electionCount];
+        e.name = _name;
+        e.active = true;
+
+        emit ElectionCreated(electionCount, _name);
+        return electionCount;
+    }
+
+    function closeElection(uint256 _electionId) external {
+        elections[_electionId].active = false;
+    }
+
+    // -------------------------
+    // VOTING
+    // -------------------------
+    function vote(
+        uint256 _electionId,
+        uint256 _partyId,
+        uint[2] memory a,
+        uint[2][2] memory b,
+        uint[2] memory c,
+        uint[3] memory input
+    ) external {
+        Election storage e = elections[_electionId];
+
         require(e.active, "Election is not active");
         require(!e.hasVoted[msg.sender], "Already voted");
 
-        // check candidate is valid
-        bool valid = false;
-        for (uint256 i = 0; i < e.candidateIds.length; i++) {
-            if (e.candidateIds[i] == candidateId) {
-                valid = true;
-                break;
-            }
-        }
-        require(valid, "Invalid candidate");
+        // Verify the ZKP proof
+        bool valid = verifier.verifyProof(a, b, c, input);
+        require(valid, "Invalid ZKP proof");
 
-        // record vote
+        // Mark voter as voted
         e.hasVoted[msg.sender] = true;
-        e.voteProof[msg.sender] = proofHash;
-        e.candidateVotes[candidateId]++;
-        e.voteCount++;
 
-        emit Voted(electionId, candidateId, msg.sender);
+        // Increment vote count for the selected party
+        e.partyVotes[_partyId]++;
+
+        // Increment total votes
+        e.totalVotes++;
+
+        emit VoteCast(_electionId, _partyId);
     }
 
+    // -------------------------
+    // READ FUNCTIONS
+    // -------------------------
+    function getPartyVotes(uint256 _electionId, uint256 _partyId) external view returns (uint256) {
+        return elections[_electionId].partyVotes[_partyId];
+    }
+
+    function hasVoted(uint256 _electionId, address _voter) external view returns (bool) {
+        return elections[_electionId].hasVoted[_voter];
+    }
+
+    function getTotalVotes(uint256 _electionId) external view returns (uint256) {
+        return elections[_electionId].totalVotes;
+    }
 }

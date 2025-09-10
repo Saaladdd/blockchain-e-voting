@@ -91,12 +91,11 @@ export default function VoterDashboard() {
     setIsConnecting(true)
     // Mock wallet connection
     await new Promise((resolve) => setTimeout(resolve, 2000))
-    setWalletConnected(true)
     setIsConnecting(false)
   }
 
   const handleVoteClick = (party: Party) => {
-    if (voterStatus.hasVoted || !walletConnected || !selectedElection) return
+    if (voterStatus.hasVoted || connected || !selectedElection) return
     setSelectedParty(party)
     setShowConfirmation(true)
   }
