@@ -112,7 +112,6 @@ export default function VoterDashboard() {
     }
   }
 
-  if (!user) return null
 
   if (!verificationStatus || verificationStatus !== "verified") {
     return (
