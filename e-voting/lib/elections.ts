@@ -1,25 +1,6 @@
 export interface Election {
   id: string
   name: string
-  description: string
-  type: "presidential" | "parliamentary" | "local" | "referendum"
-  status: "draft" | "setup" | "active" | "completed" | "cancelled"
-  startDate: Date
-  endDate: Date
-  createdAt: Date
-  createdBy: string
-  settings: {
-    allowMultipleVotes: boolean
-    requireVerification: boolean
-    enableBlockchain: boolean
-  }
-  statistics: {
-    totalRegisteredVoters: number
-    totalVerifiedVoters: number
-    totalVotesCast: number
-    turnoutPercentage: number
-    partiesCount: number
-  }
 }
 
 export interface ElectionParty {

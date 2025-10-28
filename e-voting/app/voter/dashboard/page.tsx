@@ -25,6 +25,8 @@ import {
 import WalletConnectButton from "@/components/voter/WallectConnectButton"
 import { useSelector } from "react-redux";
 import { RootState } from "@/app/store";
+import  hashId   from "@/scripts/hashId";
+import { hash } from "crypto"
 
 export default function VoterDashboard() {
   const {user,logout,login } = useAuth()
@@ -41,7 +43,7 @@ export default function VoterDashboard() {
 
   const [verificationData, setVerificationData] = useState<VerificationData>({
     fullName: "",
-    dateOfBirth: "",
+    idHash: "",
     otp: "",
     phoneNumber: ""
   })
@@ -52,38 +54,40 @@ export default function VoterDashboard() {
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
+    await hashId("12345");
+    // e.preventDefault();
     
-    try {
-      const res = await fetch("/api/voter-verification", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: verificationData.fullName.trim(), 
-                                dateOfBirth: verificationData.dateOfBirth, 
-                                otp: verificationData.otp.trim(), 
-                                phoneNumber: verificationData.phoneNumber.trim() }), 
-      })
+    // try {
+    //   const res = await fetch("/api/voter-verification", {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ fullName: verificationData.fullName.trim(), 
+    //                             idHash: verificationData.idHash, 
+    //                             otp: verificationData.otp.trim(), 
+    //                             phoneNumber: verificationData.phoneNumber.trim() }), 
+    //   })
 
-      const data = await res.json()
-      console.log("Show:",data)
-      if (!data.exists) {
-        setError("Credentials do not match");
-        return
-      }
-      else{
-        setError(null);
-        login({
-          fullName: verificationData.fullName,
-          dateOfBirth: verificationData.dateOfBirth,
-          role: "voter" as UserRole,
-        })
-        setVerificationStatus("verified" as VerificationStatus);
+    //   const data = await res.json()
+    //   console.log("Show:",data)
+    //   if (!data.exists) {
+    //     setError("Credentials do not match");
+    //     return
+    //   }
+    //   else{
+    //     setError(null);
+    //     login({
+    //       fullName: verificationData.fullName,
+    //       dateOfBirth: verificationData.idHash,
+    //       role: "voter" as UserRole,
+    //     })
+    //     setVerificationStatus("verified" as VerificationStatus);
               
-      }
+    //   }
       
-    } catch (error) {
-      console.error("Error submitting verification:", error)
-    }
+    // } catch (error) {
+    //   console.error("Error submitting verification:", error)
+    // }
   }
     
 
@@ -186,12 +190,12 @@ export default function VoterDashboard() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                        <Label htmlFor="idHash">ID</Label>
                         <Input
-                          id="dateOfBirth"
-                          type="date"
-                          value={verificationData.dateOfBirth}
-                          onChange={(e) => setVerificationData({ ...verificationData, dateOfBirth: e.target.value })}
+                          id="idHash"
+                          type="text"
+                          value={verificationData.idHash}
+                          onChange={(e) => setVerificationData({ ...verificationData, idHash: e.target.value })}
                           required
                           className="transition-all duration-200 focus:ring-2"
                         />
@@ -278,9 +282,6 @@ export default function VoterDashboard() {
       <Navbar role="voter" title="Voter Dashboard" />
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <ElectionSelector selectedElection={selectedElection} onElectionChange={setSelectedElection} />
-        </div>
 
         {!selectedElection && (
           <Card className="mb-8">

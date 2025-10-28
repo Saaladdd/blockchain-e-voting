@@ -1,5 +1,5 @@
 // This is the address your EVoting contract was deployed to on your local Hardhat network.
-export const evotingContractAddress = "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512";
+export const evotingContractAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
 
 // This is the Application Binary Interface (ABI) of your EVoting contract.
 export const evotingContractABI = [
@@ -32,9 +32,9 @@ export const evotingContractABI = [
       "inputs": [
         {
           "indexed": true,
-          "internalType": "address",
-          "name": "voter",
-          "type": "address"
+          "internalType": "uint256",
+          "name": "voterHash",
+          "type": "uint256"
         },
         {
           "indexed": true,
@@ -44,6 +44,19 @@ export const evotingContractABI = [
         }
       ],
       "name": "VoteCast",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "voterHash",
+          "type": "uint256"
+        }
+      ],
+      "name": "VoterRegistered",
       "type": "event"
     },
     {
@@ -85,24 +98,12 @@ export const evotingContractABI = [
     },
     {
       "inputs": [],
-      "name": "getCandidates",
+      "name": "getCandidateNames",
       "outputs": [
         {
-          "components": [
-            {
-              "internalType": "string",
-              "name": "name",
-              "type": "string"
-            },
-            {
-              "internalType": "uint256",
-              "name": "voteCount",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct EVoting.Candidate[]",
+          "internalType": "string[]",
           "name": "",
-          "type": "tuple[]"
+          "type": "string[]"
         }
       ],
       "stateMutability": "view",
@@ -130,9 +131,9 @@ export const evotingContractABI = [
     {
       "inputs": [
         {
-          "internalType": "address",
+          "internalType": "uint256",
           "name": "",
-          "type": "address"
+          "type": "uint256"
         }
       ],
       "name": "hasVoted",
@@ -147,13 +148,32 @@ export const evotingContractABI = [
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "owner",
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "voterHash",
+          "type": "uint256"
+        }
+      ],
+      "name": "registerVoter",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "registeredVoters",
       "outputs": [
         {
-          "internalType": "address",
+          "internalType": "bool",
           "name": "",
-          "type": "address"
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -177,6 +197,11 @@ export const evotingContractABI = [
         {
           "internalType": "uint256",
           "name": "candidateIndex",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "voterHash",
           "type": "uint256"
         },
         {

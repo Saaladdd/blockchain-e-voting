@@ -2,7 +2,7 @@ import { User } from "./auth"
 
 export interface VerificationData {
   fullName: string
-  dateOfBirth: string
+  idHash: string
   otp: string
   phoneNumber: string
 }

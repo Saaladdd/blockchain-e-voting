@@ -6,14 +6,24 @@ const connection = await hre.network.connect();
 async function main() {
   console.log("🚀 Starting deployment of the EVoting contract...");
 
-  // Use Ignition to deploy the module.
-  // This handles the entire deployment process defined in EVotingModule.
-  const { evoting } = await connection.ignition.deploy(EVotingModule);
+  const { ethers } = await hre.network.connect();
 
-  // Retrieve the deployed contract's address
-  const contractAddress = await evoting.getAddress();
+  // 1️⃣ Compile the contracts (optional if using hardhat run)
 
-  console.log(`✅ EVoting contract deployed successfully to: ${contractAddress}`);
+
+  // 2️⃣ Get signers
+  const [deployer] = await ethers.getSigners();
+  console.log("Deploying contracts with account:", deployer.address);
+
+  // 3️⃣ Deploy Verifier contract (dummy if needed)
+  const VerifierFactory = await ethers.getContractFactory("Groth16Verifier");
+  const verifier = await VerifierFactory.deploy();
+  console.log("Verifier deployed to:", verifier.target);
+
+  // 4️⃣ Deploy EVoting contract
+  const EVotingFactory = await ethers.getContractFactory("EVoting");
+  const evoting = await EVotingFactory.deploy(verifier.target);
+  console.log("EVoting deployed to:", evoting.target);
 }
 
 // We recommend this pattern to be able to use async/await everywhere

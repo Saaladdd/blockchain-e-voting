@@ -1,130 +1,293 @@
 "use client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+import { useState, useEffect } from "react"
+import { useEVotingContract } from "@/components/ui/useEvotingContract"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Loader2, PlusCircle, Calendar, Users } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Users, Vote, Clock } from "lucide-react"
-import { mockElections, getActiveElections, type Election } from "@/lib/elections"
-import  WalletConnectButton from "@/components/voter/WallectConnectButton";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import type { Election } from "@/lib/elections" // Your Election type
 
-interface ElectionSelectorProps {
-  selectedElection: Election | null
-  onElectionChange: (election: Election) => void
-}
+// The component no longer needs to receive 'elections' as a prop
+export function ElectionsList() {
+  // --- State ---
+  const { contract, signer, address } = useEVotingContract() // Hook to get the contract instance
+  const [elections, setElections] = useState<Election[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-export function ElectionSelector({ selectedElection, onElectionChange }: ElectionSelectorProps) {
-  const activeElections = getActiveElections()
-  const availableElections = mockElections.filter(
-    (election) => election.status === "active" || election.status === "setup",
-  )
+  // State for the new election form
+  const [newElectionName, setNewElectionName] = useState("")
+  const [newElectionType, setNewElectionType] = useState("")
+  const [newStartDate, setNewStartDate] = useState("")
+  const [newEndDate, setNewEndDate] = useState("")
+  
+  // State for the submission logic
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState("")
 
-  const getStatusColor = (status: Election["status"]) => {
-    switch (status) {
-      case "active":
-        return "default"
-      case "setup":
-        return "outline"
-      case "completed":
-        return "secondary"
-      default:
-        return "secondary"
+  // --- 1. "Get Function" (Fetching Elections) ---
+  const fetchElections = async () => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      // Assumes your backend API route is /api/elections
+      const response = await fetch("/api/elections") 
+      if (!response.ok) {
+        throw new Error("Failed to fetch elections")
+      }
+      // Parse the JSON response and ensure dates are converted
+      const data = await response.json()
+      const formattedElections: Election[] = data.map((election: any) => ({
+        ...election,
+        startDate: new Date(election.startDate), // Convert date strings to Date objects
+        endDate: new Date(election.endDate),
+      }))
+      setElections(formattedElections)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
     }
   }
 
-  const getTimeRemaining = (endDate: Date) => {
-    const now = new Date()
-    const diff = endDate.getTime() - now.getTime()
+  // Fetch elections when the component mounts
+  useEffect(() => {
+    fetchElections()
+  }, [])
 
-    if (diff <= 0) return "Ended"
-
-    const hours = Math.floor(diff / (1000 * 60 * 60))
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-
-    if (hours > 0) {
-      return `${hours}h ${minutes}m remaining`
+  // --- 2. "Add to Chain + Backend" Function ---
+  const handleCreateElection = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!contract) {
+      setSubmitStatus("Error: Contract not connected")
+      return
     }
-    return `${minutes}m remaining`
+    
+    // --- UPDATED: Basic validation for all fields ---
+    if (!newElectionName || !newElectionType || !newStartDate || !newEndDate) {
+        setSubmitStatus("Please fill out all fields.")
+        return
+    }
+    
+    setIsSubmitting(true)
+    setSubmitStatus("Submitting to blockchain...")
+    let transactionHash = ""
+
+    try {
+      if(contract){
+        console.log("Submitting with contract:",contract);
+        
+        // --- Step 1: Submit to the Chain ---
+        
+        // --- FIX: Combine all form data into one string ---
+        const combinedDataString = `${newElectionName} (${newElectionType}) | ${newStartDate} to ${newEndDate}`;
+        // --- END OF FIX ---
+
+        // NOTE: We are now calling `addCandidate` with the single combined string.
+        // This will succeed because the function is now public.
+        const tx = await contract.addCandidate(
+          combinedDataString
+        )
+        
+        const receipt = await tx.wait()
+        if (receipt.status !== 1) {
+            throw new Error("Blockchain transaction failed!")
+        }
+        transactionHash = receipt.hash
+        setSubmitStatus("Syncing with backend...")
+
+        // --- Step 2: Push to the Backend ---
+        const response = await fetch('/api/elections', { // Your backend POST route
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: newElectionName,
+            type: newElectionType,
+            startDate: newStartDate,
+            endDate: newEndDate,
+            transactionHash: transactionHash,
+          }),
+        })
+
+        if (!response.ok) {
+          throw new Error("Backend sync failed!")
+        }
+
+        setSubmitStatus("Successfully created new election!")
+        
+        // Clear form and refresh the list
+        setNewElectionName("")
+        setNewElectionType("")
+        setNewStartDate("")
+        setNewEndDate("")
+        fetchElections() // Refresh the elections list
+
+        // Clear the status message after a few seconds
+        setTimeout(() => setSubmitStatus(""), 3000)
+    }
+
+    } catch (err: any) {
+      console.error(err)
+      setSubmitStatus(`Error: ${err.message}`)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+  console.log("Contract is:",contract);
+
+  // --- Render Logic ---
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Vote className="h-5 w-5" />
-          Select Election
-        </CardTitle>
-        <CardDescription>Choose which election you want to participate in</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          <Select
-            value={selectedElection?.id || ""}
-            onValueChange={(value) => {
-              const election = availableElections.find((e) => e.id === value)
-              if (election) onElectionChange(election)
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select an election" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableElections.map((election) => (
-                <SelectItem key={election.id} value={election.id}>
-                  <div className="flex items-center justify-between w-full">
-                    <span>{election.name}</span>
-                    <Badge variant={getStatusColor(election.status)} className="ml-2">
-                      {election.status}
-                    </Badge>
+    <div className="space-y-8">
+      {/* --- New Election Form --- */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <PlusCircle className="h-5 w-5" />
+            Create New Election
+          </CardTitle>
+          <CardDescription>
+            Add a new election to the smart contract and sync it with the backend.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleCreateElection} className="space-y-4">
+            
+            {/* --- UPDATED: Added all form fields --- */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="election-name">Election Name</Label>
+                <Input
+                  id="election-name"
+                  placeholder="e.g., General Election 2025"
+                  value={newElectionName}
+                  onChange={(e) => setNewElectionName(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="election-type">Election Type</Label>
+                <Input
+                  id="election-type"
+                  placeholder="e.g., Presidential"
+                  value={newElectionType}
+                  onChange={(e) => setNewElectionType(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Start Date</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={newStartDate}
+                  onChange={(e) => setNewStartDate(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">End Date</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={newEndDate}
+                  onChange={(e) => setNewEndDate(e.target.value)}
+                  disabled={isSubmitting}
+                  required
+                />
+              </div>
+            </div>
+            {/* --- END OF UPDATE --- */}
+
+            <div className="flex items-center justify-between">
+              <Button type="submit" disabled={isSubmitting || !contract}>
+                {isSubmitting ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                )}
+                {isSubmitting ? "Creating..." : "Create Election"}
+              </Button>
+              {submitStatus && <p className="text-sm text-muted-foreground">{submitStatus}</p>}
+            </div>
+            {!contract && <p className="text-sm text-yellow-600">Connecting to contract...</p>}
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* --- Existing Elections List --- */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Existing Elections</h2>
+        {isLoading ? (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">Loading elections...</p>
+            </CardContent>
+          </Card>
+        ) : error ? (
+           <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-red-500">{error}</p>
+            </CardContent>
+          </Card>
+        ) : elections.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <p className="text-center text-muted-foreground">No elections found.</p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4">
+            {elections.map((election) => (
+              <Card key={election.id}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle>{election.name}</CardTitle>
+                      <CardDescription className="capitalize">{election.type} Election</CardDescription>
+                    </div>
+                    {/* You can add a Badge for status here if your Election type has it */}
+                    {/* <Badge>Active</Badge> */}
                   </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {selectedElection && (
-            <div className="rounded-lg border bg-muted/50 p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium">{selectedElection.name}</h4>
-                <Badge variant={getStatusColor(selectedElection.status)}>{selectedElection.status}</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">{selectedElection.description}</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>Start: {selectedElection.startDate.toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>End: {selectedElection.endDate.toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  <span>Registered: {selectedElection.statistics.totalRegisteredVoters.toLocaleString()}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{getTimeRemaining(selectedElection.endDate)}</span>
-                </div>
-              </div>
-              {selectedElection.status === "setup" && (
-                <div className="rounded-md bg-yellow-50 dark:bg-yellow-950 p-3 border border-yellow-200 dark:border-yellow-800">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    This election is in setup phase. Voting will begin on{" "}
-                    {selectedElection.startDate.toLocaleDateString()}.
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {availableElections.length === 0 && (
-            <div className="text-center py-8">
-              <Vote className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="font-medium text-muted-foreground">No Active Elections</h3>
-              <p className="text-sm text-muted-foreground">There are currently no elections available for voting.</p>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <div className="text-sm">
+                        <p className="font-medium">{election.startDate.toLocaleDateString()}</p>
+                        <p className="text-xs text-muted-foreground">Start Date</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <div className="text-sm">
+                        <p className="font-medium">{election.endDate.toLocaleDateString()}</p>
+                        <p className="text-xs text-muted-foreground">End Date</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                      <div className="text-sm">
+                        <p className="font-medium">
+                          {election.statistics?.totalRegisteredVoters.toLocaleString() ?? 'N/A'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">Registered Voters</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }

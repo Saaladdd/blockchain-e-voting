@@ -1,5 +1,3 @@
-// Prisma schema for blockchain-based e-voting system
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,44 +7,28 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// 
 model Voter {
-  id        Int       @id @default(autoincrement())
-  voter_id  String    @unique
-  name      String
-  dob       DateTime
-  phone     String    @unique
-  otp       Int?
-  votes     Vote[]    // relation to the votes this voter cast
+  id          Int       @id @default(autoincrement())
+  name        String    
+  idHash      String    @unique
+  phoneNumber String    @unique
+  otp         Int?
+
 }
 
-model Party {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique
-  logo      String
-  password  String
-  votes     Vote[]    // relation to votes for this party
+// Matches Solidity struct Candidate
+model Candidate {
+  id         Int      @id @default(autoincrement())
+  name       String   @unique
+  voteCount  Int      @default(0)
+  createdAt  DateTime @default(now())
 }
 
-model Election {
-  id            Int       @id @default(autoincrement())
-  name          String    @unique
-  voter_count   Int
-  election_type String
-  start_date    DateTime
-  end_date      DateTime
-  description   String
-  votes         Vote[]    // relation to votes in this election
-}
-
-model Vote {
-  id         Int       @id @default(autoincrement())
-  voter      Voter     @relation(fields: [voterId], references: [id])
-  voterId    Int
-  party      Party     @relation(fields: [partyId], references: [id])
-  partyId    Int
-  election   Election  @relation(fields: [electionId], references: [id])
-  electionId Int
-  createdAt  DateTime  @default(now())
-  
-  @@unique([voterId, electionId]) // prevents double voting in same election
+// Optional local mirror of blockchain transactions
+model VoteRecord {
+  id          Int      @id @default(autoincrement())
+  candidateId Int
+  txHash      String?  // blockchain transaction hash
+  createdAt   DateTime @default(now())
 }

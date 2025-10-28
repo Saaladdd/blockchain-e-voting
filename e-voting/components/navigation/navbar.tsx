@@ -54,13 +54,11 @@ export function Navbar({ role, title }: NavbarProps) {
           </div>
           <div>
             <h1 className="text-lg font-serif font-bold text-foreground">SecureVote</h1>
-            {getDisplayTitle() && <p className="text-xs text-muted-foreground">{getDisplayTitle()}</p>}
           </div>
         </Link>
 
         {/* Center Section - Election Switcher and Navigation */}
         <div className="flex items-center gap-6">
-          {role && <ElectionSwitcher />}
 
           {/* Navigation Links */}
           {navLinks.length > 0 && (

@@ -66,7 +66,7 @@ export default function HomePage() {
           </FadeIn>
 
           {/* Role Selection Cards */}
-          <div className="grid gap-8 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-2">
             {/* Voter Card */}
             <FadeIn delay={400}>
               <Card className="group flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-2">
@@ -80,40 +80,13 @@ export default function HomePage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <Link href="/voter/login">
+                  <Link href="/voter/dashboard">
                     <Button className="w-full transition-all duration-300 hover:scale-105 active:scale-95" size="lg">
                       Login as Voter
-                    </Button>
+                    </Button> 
                   </Link>
                   <p className="mt-3 text-sm text-muted-foreground">
                     Requires wallet connection and ID verification
-                  </p>
-                </CardContent>
-              </Card>
-            </FadeIn>
-
-            {/* Party Card */}
-            <FadeIn delay={500}>
-              <Card className="group flex flex-col justify-between h-full transition-all duration-300 hover:shadow-xl hover:shadow-primary/10 hover:-translate-y-2">
-                <CardHeader className="pb-4 flex-grow">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary/10 transition-all duration-300 group-hover:bg-secondary/20 group-hover:scale-110">
-                    <Users className="h-8 w-8 text-primary transition-all duration-300 group-hover:scale-110" />
-                  </div>
-                  <CardTitle className="text-xl font-serif">Party Access</CardTitle>
-                  <CardDescription className="text-base">
-                    Monitor your campaign performance and view real-time voting statistics.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <Link href="/party/login">
-                    <Button
-                      className="w-full transition-all duration-300 hover:scale-105 active:scale-95" size="lg"
-                    >
-                      Login as Party
-                    </Button>
-                  </Link>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    Use credentials provided by election administrator
                   </p>
                 </CardContent>
               </Card>

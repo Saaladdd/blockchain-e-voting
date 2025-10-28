@@ -72,38 +72,7 @@ export default function VoterLoginPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="voterId">Voter ID Number</Label>
-                    <Input
-                      id="voterId"
-                      type="text"
-                      placeholder="Enter your Voter ID"
-                      value={formData.voterId}
-                      onChange={(e) => setFormData({ ...formData, voterId: e.target.value })}
-                      required
-                      disabled={isLoading}
-                      className="transition-all duration-300 focus:ring-2 focus:scale-[1.02]"
-                    />
-                    {error && <p className="text-sm text-red-500">{error}</p>}
-                  </div>
-
-                  <Button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full transition-all duration-300 hover:scale-105 active:scale-95"
-                    size="lg"
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Authenticating...
-                      </>
-                    ) : (
-                      "Continue to Verification"
-                    )}
-                  </Button>
-                </form>
+                
                 <div className="mt-6 rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:bg-muted/50">
                   <h4 className="mb-2 text-sm font-medium">Next Steps</h4>
                   <p className="text-xs text-muted-foreground">
