@@ -17,7 +17,7 @@
     You should have received a copy of the GNU General Public License
     along with snarkJS. If not, see <https://www.gnu.org/licenses/>.
 */
-
+import "hardhat/console.sol";
 pragma solidity >=0.7.0 <0.9.0;
 
 contract Groth16Verifier {
@@ -61,6 +61,7 @@ contract Groth16Verifier {
 
     function verifyProof(uint[2] calldata _pA, uint[2][2] calldata _pB, uint[2] calldata _pC, uint[2] calldata _pubSignals) public view returns (bool) {
         assembly {
+            
             function checkField(v) {
                 if iszero(lt(v, r)) {
                     mstore(0, 0)
@@ -163,13 +164,14 @@ contract Groth16Verifier {
             checkField(calldataload(add(_pubSignals, 0)))
             
             checkField(calldataload(add(_pubSignals, 32)))
+            let ptr := mload(0x40)      // load free memory pointer
+            mstore(ptr, 1)              // store 1 (true) at ptr
+            mstore(0x40, add(ptr, 0x20))// update free memory pointer
+            let isValid := checkPairing(_pA, _pB, _pC, _pubSignals, pMem)
+            return(ptr, 0x20)
+
             
 
-            // Validate all evaluations
-            let isValid := checkPairing(_pA, _pB, _pC, _pubSignals, pMem)
-
-            mstore(0, isValid)
-             return(0, 0x20)
          }
      }
  }

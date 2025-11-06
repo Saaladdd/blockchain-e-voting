@@ -1,5 +1,5 @@
 // This is the address your EVoting contract was deployed to on your local Hardhat network.
-export const evotingContractAddress = "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82";
+export const evotingContractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
 
 // This is the Application Binary Interface (ABI) of your EVoting contract.
 export const evotingContractABI = [
@@ -97,6 +97,37 @@ export const evotingContractABI = [
       "type": "function"
     },
     {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "index",
+          "type": "uint256"
+        }
+      ],
+      "name": "getCandidate",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "name",
+              "type": "string"
+            },
+            {
+              "internalType": "uint256",
+              "name": "voteCount",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct EVoting.Candidate",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "getCandidateNames",
       "outputs": [
@@ -113,16 +144,16 @@ export const evotingContractABI = [
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "candidateIndex",
+          "name": "",
           "type": "uint256"
         }
       ],
-      "name": "getVoteCount",
+      "name": "hasVoted",
       "outputs": [
         {
-          "internalType": "uint256",
+          "internalType": "bool",
           "name": "",
-          "type": "uint256"
+          "type": "bool"
         }
       ],
       "stateMutability": "view",
@@ -132,11 +163,11 @@ export const evotingContractABI = [
       "inputs": [
         {
           "internalType": "uint256",
-          "name": "",
+          "name": "voterHash",
           "type": "uint256"
         }
       ],
-      "name": "hasVoted",
+      "name": "isRegistered",
       "outputs": [
         {
           "internalType": "bool",
@@ -220,9 +251,9 @@ export const evotingContractABI = [
           "type": "uint256[2]"
         },
         {
-          "internalType": "uint256[1]",
+          "internalType": "uint256[2]",
           "name": "input",
-          "type": "uint256[1]"
+          "type": "uint256[2]"
         }
       ],
       "name": "vote",

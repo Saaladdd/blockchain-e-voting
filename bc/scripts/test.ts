@@ -21,12 +21,6 @@ async function main() {
   const evoting = await EVotingFactory.deploy(verifier.target);
   console.log("EVoting deployed to:", evoting.target);
 
-  // 5️⃣ Add a candidate
-  const candidateName = "Bob";
-  const tx = await evoting.addCandidate(candidateName);
-  await tx.wait();
-  console.log(`Candidate "${candidateName}" added!`);
-
   // 6️⃣ Fetch candidate names
   const candidates = await evoting.getCandidateNames();
   console.log("Candidates:", candidates);

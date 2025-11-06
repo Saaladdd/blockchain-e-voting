@@ -8,10 +8,6 @@ export async function GET(req: Request) {
       select: {
         name: true, // Only include the name
       },
-      orderBy: {
-        // Optional: Order the names alphabetically
-        name: 'asc',
-      },
     });
 
     // 2. Extract just the names into an array of strings

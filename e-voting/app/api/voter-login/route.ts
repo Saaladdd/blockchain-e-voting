@@ -1,17 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { buildPoseidon } from "circomlibjs";
+import { calculatePoseidonHash } from "@/lib/zkp-helper";
 
 export async function POST(req: Request) {
   try {
     const { voterId } = await req.json();
     console.log("Voter:",voterId);
+    
+    const idHash = calculatePoseidonHash(voterId);
 
     if (!voterId) {
       return NextResponse.json({ error: "Missing voterId" }, { status: 400 });
     }
 
     const voter = await prisma.voter.findUnique({
-      where: { voter_id:voterId },
+      where: { idHash:idHash },
     }); 
     console.log(voter);
     if (voter === null) {

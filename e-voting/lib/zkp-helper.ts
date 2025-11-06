@@ -23,17 +23,16 @@ export function calculatePoseidonHash(voterId: string): string {
   const dataToHash = voterId.trim(); // Ensure consistent formatting
 
   // 2. Convert string to bytes (UTF-8)
-  const bytes = ethers.toUtf8Bytes(dataToHash);
 
   // 3. Convert bytes to a BigInt
   //    (Note: ethers.hexlify adds '0x', BigInt expects it for hex)
   //    If ID is too long, this simple conversion might overflow typical fields.
   //    More robust methods pack bytes into multiple field elements.
-  const numberRepresentation = BigInt(ethers.hexlify(bytes));
+
 
   // 4. Hash the number using Poseidon (single input)
   //    The result is already a BigInt in the field.
-  const hashResult = poseidon([numberRepresentation]);
+  const hashResult = poseidon([dataToHash]);
 
   // 5. Return the hash as a decimal string (common format for snarkjs)
   return poseidon.F.toString(hashResult);

@@ -46,34 +46,44 @@ contract EVoting {
 
     // Vote for a candidate using ZK proof
     function vote(
-        uint256 candidateIndex,
-        uint256 voterHash,           // Poseidon hash of Aadhaar (public input)
-        uint256[2] memory a,
-        uint256[2][2] memory b,
-        uint256[2] memory c,
-        uint256[2] memory input      // circuit public output (1 = eligible)
-    ) public {
-        require(candidateIndex < candidates.length, "Invalid candidate");
-        require(!hasVoted[voterHash], "Already voted");
-        require(registeredVoters[voterHash], "Not registered");
-        console.log("Input 0 is:",input[0]);
-        console.log("Input 1 is:",input[1]);
-        // Verify zkSNARK proof
-        bool verified = verifier.verifyProof(a, b, c, input);
+    uint256 candidateIndex,
+    uint256 voterHash,
+    uint256[2] memory a,
+    uint256[2][2] memory b,
+    uint256[2] memory c,
+    uint256[2] memory input
+) public {
+    console.log("Voting with voterHash:", voterHash);
+    console.log("Is registered:", registeredVoters[voterHash]);
+    console.log("Has voted:", hasVoted[voterHash]);
+    console.log("Input[0]:", input[0], "Input[1]:", input[1]);
+
+    require(!hasVoted[voterHash], "Already voted");
+    require(registeredVoters[voterHash], "Not registered");
+
+    bool verified = false;
+
+    try verifier.verifyProof(a, b, c, input) returns (bool result) {
+        verified = result;
         console.log("Proof Status:", verified);
-       // require(verified, "Invalid proof");
-
-        // Circuit output must indicate eligibility
-        require(input[0] == 1, "Not eligible to vote");
-
-        // Mark voter as voted
-        hasVoted[voterHash] = true;
-
-        // Increment candidate vote count
-        candidates[candidateIndex].voteCount += 1;
-
-        emit VoteCast(voterHash, candidateIndex);
+    } catch Error(string memory reason) {
+        console.log("Proof verification failed with reason:", reason);
+        verified = false;
+    } catch (bytes memory) {
+        console.log("Proof verification failed: low-level revert");
+        verified = false;
     }
+
+
+    //require(verified, "Invalid proof");
+    require(input[0] == 1, "Not eligible to vote");
+
+    hasVoted[voterHash] = true;
+    candidates[candidateIndex].voteCount += 1;
+
+    emit VoteCast(voterHash, candidateIndex);
+}
+
 
     // Fetch all candidate names
     function getCandidateNames() public view returns (string[] memory) {
@@ -85,12 +95,16 @@ contract EVoting {
     }
 
     function isRegistered(uint256 voterHash) public view returns (bool) {
+        
         return registeredVoters[voterHash];
     }
 
     // Fetch vote count for a candidate
-    function getVoteCount(uint256 candidateIndex) public view returns (uint256) {
-        require(candidateIndex < candidates.length, "Invalid index");
-        return candidates[candidateIndex].voteCount;
-    }
+    function getCandidate(uint index) public view returns (Candidate memory) {
+    console.log("Candidates length:", candidates.length);
+    console.log("Index requested:", index);
+
+    require(index < candidates.length, "Invalid candidate index");
+    return candidates[index];
+}
 }

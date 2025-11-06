@@ -110,9 +110,9 @@ describe("Groth16 Verifier Sanity Check", function () {
     ];
 
     const input: [bigint, bigint] = [
-  BigInt(publicSignals[0]),
-  BigInt(publicSignals[1])
-];
+      BigInt(publicSignals[0]),
+      BigInt(publicSignals[1])
+    ];
 
     console.log("\n=== Sanity Check Data ===");
     console.log("a:", a);
