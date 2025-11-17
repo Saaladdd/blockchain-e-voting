@@ -1,5 +1,5 @@
 // This is the address your EVoting contract was deployed to on your local Hardhat network.
-export const evotingContractAddress = "0xa513E6E4b8f2a923D98304ec87F64353C4D5C853";
+export const evotingContractAddress = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9";
 
 // This is the Application Binary Interface (ABI) of your EVoting contract.
 export const evotingContractABI = [
