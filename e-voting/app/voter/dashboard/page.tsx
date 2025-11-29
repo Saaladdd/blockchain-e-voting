@@ -124,10 +124,10 @@ export default function VoterDashboard() {
 
       const hashedId = await hashid(verificationData.idHash)
       console.log("Voting for candidate:", candidateId)
-      console.log("Sending parameters:", BigInt(candidateId-30), BigInt(hashedId), a, b, c, input)
+      console.log("Sending parameters:", BigInt(candidateId), BigInt(hashedId), a, b, c, input)
 
       // Call the smart contract with the actual selected candidate index
-      const tx = await contract.vote(BigInt(candidateId-30), BigInt(hashedId), a, b, c, input)
+      const tx = await contract.vote(BigInt(candidateId), BigInt(hashedId), a, b, c, input)
       console.log("✅ Vote submitted:", tx.hash)
 
       setSelectedCandidate(candidateId)
